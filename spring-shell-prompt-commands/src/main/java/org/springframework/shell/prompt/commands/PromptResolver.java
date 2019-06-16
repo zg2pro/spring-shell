@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.springframework.shell.prompt.commands;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.jline.reader.History;
@@ -45,35 +46,21 @@ public class PromptResolver {
         this.jLineHistory = jLineHistory;
     }
 
+    public String executorService(List<String> previousCmd) throws IOException {
+        return ExecHelper.exec(false, previousCmd.toArray(new String[previousCmd.size()]));
+    }
+
     @ShellMethod(value = "reply yes to the last command")
     public String yes() throws IOException, IllegalAccessException,
             IllegalArgumentException, InvocationTargetException {
-        List<String> previousCmd = Arrays.asList(this.jLineHistory.get(this.jLineHistory.last()).split(" "));
-        previousCmd.add("--no-prompt");
-        return ExecHelper.exec(false, previousCmd.toArray(new String[previousCmd.size()]));
-//        Map<String, Object> beans = appContext.getBeansWithAnnotation(ShellComponent.class);
-//        Method toInvoke = null;
-//        Object beanToInvoke = null;
-//        for (Map.Entry<String, Object> bean : beans.entrySet()) {
-//            Class zz = bean.getValue().getClass();
-//            for (Method m : zz.getMethods()) {
-//                String[] specifiedKeys = new String[]{m.getName()};
-//                if (m.isAnnotationPresent(ShellMethod.class)) {
-//                    ShellMethod sm = m.getDeclaredAnnotation(ShellMethod.class);
-//                    if (sm.key() != null && sm.key().length > 0) {
-//                        specifiedKeys = sm.key();
-//                    }
-//                    Arrays.sort(specifiedKeys);
-//                    if (Arrays.binarySearch(specifiedKeys, previousCmdName) > -1){
-//                        toInvoke = m;
-//                        beanToInvoke = bean.getValue();
-//                    }
-//                }
-//            }
-//        }
-//        if (toInvoke != null){
-//            toInvoke.invoke(beanToInvoke, previousArgs);
-//        }
+        if (this.jLineHistory.size() > 0) {
+            List<String> previousCmd = new ArrayList<>(
+                    Arrays.asList(
+                            this.jLineHistory.get(this.jLineHistory.last()).split(" ")));
+            previousCmd.add(" --no-prompt");
+            return executorService(previousCmd);
+        }
+        throw new IllegalStateException("what was the question ?");
     }
 
     @ShellMethod(value = "reply y")
@@ -84,10 +71,15 @@ public class PromptResolver {
 
     @ShellMethod(value = "reply no to the last command")
     public String no() throws IOException {
-        List<String> previousCmd = Arrays.asList(this.jLineHistory.get(this.jLineHistory.last()).split(" "));
-        previousCmd.add("--no-prompt"); 
-        previousCmd.add("no");
-        return ExecHelper.exec(false, previousCmd.toArray(new String[previousCmd.size()]));
+        if (this.jLineHistory.size() > 0) {
+            List<String> previousCmd = new ArrayList<>(
+                    Arrays.asList(
+                            this.jLineHistory.get(this.jLineHistory.last()).split(" ")));
+            previousCmd.add(" --no-prompt");
+            previousCmd.add("no");
+            return executorService(previousCmd);
+        }
+        throw new IllegalStateException("what was the question ?");
     }
 
     @ShellMethod(value = "reply n")
