@@ -1,11 +1,11 @@
-sudo: false
 language: java
+jdk:
+  - oraclejdk11
+sudo: false
 cache:
   directories:
     - $HOME/.m2
-jdk:
-  - oraclejdk8
 install: true
-build: ./mvnw package
+script: mvn install
 after_success:
   - bash <(curl -s https://codecov.io/bash)
